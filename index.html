@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <title></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+
+    <!-- fonts / icons / css -->
+    <link href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons|Caveat+Brush|Coming+Soon'
+        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@3.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300&family=Special+Elite&display=swap"
+        rel="stylesheet">
+    <!-- Custom Css -->
+    <link rel="stylesheet" href="css/client.css">
+</head>
+<body>
+    <div id="app">
+        <v-app>
+
+            <!-- Navbar Contents -->
+            <v-navigation-drawer v-model="drawer" app disable-resize-watcher hide-overla>
+                <v-list>
+                    <v-list-item-group v-model="drawerList">
+                        <h3 class="text-center">Filters</h3>
+                        <v-divider></v-divider>
+                        <br>
+                        <v-list-item color="primary" v-for="(item, i) in menuItems" :key="i">
+                            <v-list-item-icon>
+                                <v-icon v-text="item.icon"></v-icon>
+                            </v-list-item-icon>
+                            <v-list-item-content>
+                                <v-list-item-title v-text="item.text"></v-list-item-title>
+                            </v-list-item-content>
+                        </v-list-item>
+                    </v-list-item-group>
+                </v-list>
+            </v-navigation-drawer>
+
+            <!-- Navbar -->
+            <v-app-bar color="primary" app fixed>
+                <v-app-bar-nav-icon @click.stop="drawer = !drawer" color="white"></v-app-bar-nav-icon>
+                <v-toolbar-title class="secondary--text site-title pt-1">
+                    <v-icon class="pb-3" size="30" color="secondary">mdi-lock</v-icon>!isSafe
+                </v-toolbar-title>
+                <span id="underscore-animate" class="secondary--text site-title">_</span>
+                <v-spacer></v-spacer>
+                <!-- Search Textbox -->
+                <v-layout justify-end>
+                    <v-flex shrink id="search-flex">
+                        <v-expand-x-transition>
+                            <div v-show="searching">
+                                <v-text-field v-model="search" label="Search by Entry" color="white" placeholder="Enter to Search"
+                                    background-color="accent" solo hide-details @change="searchChange">
+                                </v-text-field>
+                            </div>
+                        </v-expand-x-transition>
+                    </v-flex>
+                    <v-btn text icon @click="searching = !searching">
+                        <v-icon color="white">search</v-icon>
+                    </v-btn>
+                </v-layout>
+            </v-app-bar>
+
+            <!-- Main Content -->
+            <v-main fluid grid-list-md text-xs-center>
+                <v-layout justify-center>
+                    <v-flex>
+                        <v-container grid-list-lg fluid justify-space-around align-content-start>
+                            <v-flex>
+                                <entry v-for="(entry, i) in filteredArr" :entry="entry" @trash="trashEntry" @update="updateEntry"></entry>
+                            </v-flex>
+                        </v-container>
+                    </v-flex>
+                </v-layout>
+            </v-main>
+
+            <!-- Addition Menu FAB-->
+            <v-speed-dial v-model="fab" fab fixed bottom right>
+                <template v-slot:activator>
+                    <v-btn v-model="fab" color="primary darken-2" dark fab>
+                        <v-icon v-if="fab">
+                            mdi-close
+                        </v-icon>
+                        <v-icon v-else>
+                            add
+                        </v-icon>
+                    </v-btn>
+                </template>
+                <v-tooltip left>
+                    <template v-slot:activator="{ on, attrs }">
+                        <v-btn fab dark small color="accent" v-on="on" @click.stop="openPassModal">
+                            <v-icon>mdi-lock-plus</v-icon>
+                        </v-btn>
+                    </template>
+                    <span>Password</span>
+                </v-tooltip>
+                <v-tooltip left>
+                    <template v-slot:activator="{ on, attrs }">
+                        <v-btn fab dark small color="accent" v-on="on" @click.stop="openCardModal">
+                            <v-icon>mdi-credit-card-plus</v-icon>
+                        </v-btn>
+                    </template>
+                    <span>Credit/Debit</span>
+                </v-tooltip>
+                <v-tooltip left>
+                    <template v-slot:activator="{ on, attrs }">
+                        <v-btn fab dark small color="accent" v-on="on" @click.stop="openContactModal">
+                            <v-icon>mdi-account-plus</v-icon>
+                        </v-btn>
+                    </template>
+                    <span>Contact</span>
+                </v-tooltip>
+            </v-speed-dial>
+
+            <!-- Password Modal Form -->
+            <template>
+                <v-row justify="center">
+                    <v-dialog class="" v-model="passwordModal" persistent max-width="600px">
+                        <v-card>
+                            <v-card-title>
+                                <span class="text-h5">Create Password</span>
+                            </v-card-title>
+                            <v-card-text>
+                                <v-container>
+                                    <v-row>
+                                        <v-col cols="12" sm="12" md="12">
+                                            <v-text-field v-model="modalData.pass.Title" label="Title" required>
+                                            </v-text-field>
+                                        </v-col>
+                                        <v-col cols="12" sm="12" md="12">
+                                            <v-textarea v-model="modalData.pass.Description" rows="4"
+                                                label="Description">
+                                                </v-text-field>
+                                        </v-col>
+                                        <v-col cols="12">
+                                            <v-text-field v-model="modalData.pass.Url" label="Url"></v-text-field>
+                                        </v-col>
+                                        <v-col cols="12">
+                                            <v-text-field v-model="modalData.pass.Username" label="Username" required>
+                                            </v-text-field>
+                                        </v-col>
+                                        <v-col cols="12">
+                                            <v-text-field v-model="modalData.pass.Password" label="Password"
+                                                type="password" required></v-text-field>
+                                        </v-col>
+                                    </v-row>
+                                </v-container>
+                            </v-card-text>
+                            <v-card-actions>
+                                <v-spacer></v-spacer>
+                                <v-btn color="blue darken-1" text @click="closePassModal">
+                                    Cancel
+                                </v-btn>
+                                <v-btn color="blue darken-1" text @click="savePassModal">
+                                    Save
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+                </v-row>
+            </template>
+
+            <!-- Card Modal Form -->
+            <template>
+                <v-row justify="center">
+                    <v-dialog class="" v-model="cardModal" persistent max-width="600px">
+                        <v-card>
+                            <v-card-title>
+                                <span class="text-h5">Create Card Detail</span>
+                            </v-card-title>
+                            <v-card-text>
+                                <v-container>
+                                    <v-row>
+                                        <v-col cols="12" sm="12" md="12">
+                                            <v-text-field v-model="modalData.card.Title" label="Title" required>
+                                            </v-text-field>
+                                        </v-col>
+                                        <v-col cols="12" sm="12" md="12">
+                                            <v-textarea v-model="modalData.card.Description" rows="4"
+                                                label="Description">
+                                                </v-text-field>
+                                        </v-col>
+                                        <v-col cols="12">
+                                            <v-text-field v-model="modalData.card.Name" label="Name on Card" required>
+                                            </v-text-field>
+                                        </v-col>
+                                        <v-col cols="12">
+                                            <v-text-field v-model="modalData.card.Number" label="Card Number"
+                                                prepend-icon="mdi-credit-card" required>
+                                            </v-text-field>
+                                        </v-col>
+                                        <v-col cols="12">
+                                            <v-menu ref="menu" v-model="cardMonthMenu" :close-on-content-click="false"
+                                                :return-value.sync="cardDate" transition="scale-transition" offset-y
+                                                max-width="290px" min-width="auto">
+                                                <template v-slot:activator="{ on, attrs }">
+                                                    <v-text-field v-model="cardDate" label="Exp Date"
+                                                        prepend-icon="mdi-calendar" readonly v-bind="attrs" v-on="on"
+                                                        required>
+                                                    </v-text-field>
+                                                </template>
+                                                <v-date-picker v-model="cardDate" type="month" no-title scrollable>
+                                                    <v-spacer></v-spacer>
+                                                    <v-btn text color="primary" @click="cardMonthMenu = false">
+                                                        Cancel
+                                                    </v-btn>
+                                                    <v-btn text color="primary" @click="$refs.menu.save(cardDate)">
+                                                        OK
+                                                    </v-btn>
+                                                </v-date-picker>
+                                            </v-menu>
+                                        </v-col>
+                                        <v-col cols="12">
+                                            <v-text-field v-model="modalData.card.Cvv" label="CVV"
+                                                prepend-icon="mdi-lock-outline" required>
+                                            </v-text-field>
+                                        </v-col>
+                                    </v-row>
+                                </v-container>
+                            </v-card-text>
+                            <v-card-actions>
+                                <v-spacer></v-spacer>
+                                <v-btn color="blue darken-1" text @click="closeCardModal">
+                                    Cancel
+                                </v-btn>
+                                <v-btn color="blue darken-1" text @click="saveCardModal">
+                                    Save
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+                </v-row>
+            </template>
+
+            <!-- Contact Modal Form -->
+            <template>
+                <v-row justify="center">
+                    <v-dialog class="" v-model="contactModal" persistent max-width="600px">
+                        <v-card>
+                            <v-card-title>
+                                <span class="text-h5">Create Contact</span>
+                            </v-card-title>
+                            <v-card-text>
+                                <v-container>
+                                    <v-row>
+                                        <v-col cols="12" sm="12" md="12">
+                                            <v-text-field v-model="modalData.contact.Title" label="Title" required>
+                                            </v-text-field>
+                                        </v-col>
+                                        <v-col cols="12" sm="12" md="12">
+                                            <v-text-field v-model="modalData.contact.Name" label="Full Name" required>
+                                            </v-text-field>
+                                        </v-col>
+                                        <v-col cols="12">
+                                            <v-text-field v-model="modalData.contact.Phone" label="Phone" type="phone">
+                                            </v-text-field>
+                                        </v-col>
+                                        <v-col cols="12">
+                                            <v-text-field v-model="modalData.contact.Email" label="Email" type="email"
+                                                required></v-text-field>
+                                        </v-col>
+                                        <v-col cols="12">
+                                            <template>
+                                                <div>
+                                                    <v-menu ref="contactMenu" v-model="contactBirthdateMenu"
+                                                        :close-on-content-click="false" transition="scale-transition"
+                                                        offset-y min-width="auto">
+                                                        <template v-slot:activator="{ on, attrs }">
+                                                            <v-text-field v-model="contactBirthdate" label="Birthdate"
+                                                                prepend-icon="mdi-calendar" readonly v-bind="attrs"
+                                                                v-on="on"></v-text-field>
+                                                        </template>
+                                                        <v-date-picker v-model="contactBirthdate"
+                                                            :active-picker.sync="contactActivePicker"
+                                                            :max="(new Date(Date.now() - (new Date()).getTimezoneOffset() * 60000)).toISOString().substr(0, 10)"
+                                                            min="1950-01-01" @change="contactMenuSave"></v-date-picker>
+                                                    </v-menu>
+                                                </div>
+                                            </template>
+                                        </v-col>
+                                    </v-row>
+                                </v-container>
+                            </v-card-text>
+                            <v-card-actions>
+                                <v-spacer></v-spacer>
+                                <v-btn color="blue darken-1" text @click="closeContactModal">
+                                    Cancel
+                                </v-btn>
+                                <v-btn color="blue darken-1" text @click="saveContactModal">
+                                    Save
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+                </v-row>
+            </template>
+        </v-app>
+    </div>
+
+    <!-- Vue Application -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script src="js/app-models.js"></script>
+    <script src="js/components/entry.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/client.js"></script>
+</body>
+</html>

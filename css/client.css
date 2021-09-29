@@ -1,0 +1,37 @@
+* {
+    font-family: 'Roboto Mono', monospace;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+#app {
+    background-color: #FCECC9;
+    overflow: hidden;
+    padding-bottom: 20px;
+}
+
+.site-title {
+    font-family: 'Special Elite', cursive;
+    font-size: 2.2em;
+}
+
+#underscore-animate {
+    padding: 0;
+    margin: 0;
+}
+
+.short {
+    height: 20px;
+}
+
+::-webkit-scrollbar {
+    display: none;
+}
+
+._cardWrapper {
+    padding: 10px;
+    margin: 10px;
+}
